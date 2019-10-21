@@ -1,13 +1,13 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.Random;
 
 public class ComputerServer extends JFrame implements ActionListener {
     static ServerSocket server;
@@ -39,27 +39,75 @@ public class ComputerServer extends JFrame implements ActionListener {
         panel.add(Send);
         this.setTitle("Server");
         Send.addActionListener(this);
-        server = new ServerSocket(2000, 1, InetAddress.getLocalHost());
+        InetAddress locIP = InetAddress.getByName("192.168.1.101");
+//        InetAddress locIP = InetAddress.getLocalHost();
+        //        server = new ServerSocket(8090, 1, InetAddress.getLocalHost());
+        server = new ServerSocket(8090, 0, locIP);
+
         System.out.print(InetAddress.getLocalHost());
         ChatHistory.setText("Waiting for Client");
-        conn = server.accept();
-        ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
+//        ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
         while (true) {
             try {
-                DataInputStream dis = new DataInputStream(conn.getInputStream());
-                String string = dis.readUTF();
-                ChatHistory.setText(ChatHistory.getText() + '\n' + "Client:"
-                        + string);
-            } catch (Exception e1) {
-                ChatHistory.setText(ChatHistory.getText() + '\n'
-                        + "Message sending fail:Network Error");
-                try {
-                    Thread.sleep(3000);
-                    System.exit(0);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                conn = server.accept();
+                new EchoThread(conn).start();
+            } catch (IOException e) {
+                System.out.println("I/O error: " + e);
+            }
+//            try {
+//                DataInputStream dis = new DataInputStream(conn.getInputStream());
+//                String string = dis.readUTF();
+//                ChatHistory.setText(ChatHistory.getText() + '\n' + "Client:"
+//                        + string);
+//            } catch (Exception e1) {
+//                ChatHistory.setText(ChatHistory.getText() + '\n'
+//                        + "Message sending fail:Network Error");
+//                try {
+//                    Thread.sleep(3000);
+//                    System.exit(0);
+//                } catch (InterruptedException e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                }
+//            }
+        }
+    }
+
+    public class EchoThread extends Thread {
+        protected Socket socket;
+
+        public EchoThread(Socket clientSocket) {
+            this.socket = clientSocket;
+        }
+
+        public void run() {
+            Random random = new Random();
+            int ran = random.nextInt()%100;
+            BufferedReader input;
+            ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
+//            try {
+////                inp = socket.getInputStream();
+////                brinp = new BufferedReader(new InputStreamReader(inp));
+////                out = new DataOutputStream(socket.getOutputStream());
+//                DataInputStream dis = new DataInputStream(conn.getInputStream());
+//                String string = dis.readUTF();
+//            } catch (IOException e) {
+//                return;
+//            }
+            try {
+//                PrintWriter output = new PrintWriter(socket.getOutputStream());
+                while (true) {
+                    try {
+                        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        String message = input.readLine();
+                        if (message!=null) ChatHistory.setText(ChatHistory.getText() + '\n' + "Thread "+ran+":"+message);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
+                    }
                 }
+            } catch (Exception e){
+                e.printStackTrace();
             }
         }
     }
