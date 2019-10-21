@@ -121,7 +121,10 @@ public class ComputerServer extends JFrame implements ActionListener {
             try {
                 DataOutputStream dos = new DataOutputStream(
                         conn.getOutputStream());
-                dos.writeUTF(NewMsg.getText());
+                dos.writeUTF(NewMsg.getText()+"\n");
+//                PrintWriter output = new PrintWriter(conn.getOutputStream());
+//                output.write(NewMsg.getText()+"\n");
+//                output.flush();
             } catch (Exception e1) {
                 try {
                     Thread.sleep(3000);
