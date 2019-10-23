@@ -92,12 +92,13 @@ public class ComputerServer extends JFrame implements ActionListener {
                     try {
                         String action = input.readLine();
                         boolean loginOK = false;
-                        switch (action){
-                            case LOGIN_ACTION: {
-                                loginOK = doLogIn(input,output,ip);
-                            } break;
-                            case SIGNUP_ACTION: doSignUp(input,output,ip);break;
-                        }
+                        if (action!=null)
+                            switch (action){
+                                case LOGIN_ACTION: {
+                                    loginOK = doLogIn(input,output,ip);
+                                } break;
+                                case SIGNUP_ACTION: doSignUp(input,output,ip);break;
+                            }
                         if (loginOK) break;
                     } catch (IOException e){
                         e.printStackTrace();
