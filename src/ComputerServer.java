@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 
@@ -18,9 +19,20 @@ public class ComputerServer extends JFrame implements ActionListener {
     JButton Send;
     DataInputStream dis;
     DataOutputStream dos;
+    ArrayList<UserAccount> userList;
+    private static final String LOGIN_ACTION = "LOGIN";
+    private static final String SIGNUP_ACTION = "SIGNUP";
+
+    private static final String SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
+    private static final String SIGNUP_FAIL_USERNAME = "SIGNUP_FAIL_USERNAME";
+
+    private static final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
+    private static final String LOGIN_FAIL_PASSWORD = "LOGIN_FAIL_PASSWORD";
+    private static final String LOGIN_FAIL_USERNAME = "LOGIN_FAIL_USERNAME";
+
 
     public ComputerServer() throws UnknownHostException, IOException {
-
+        userList = new ArrayList<>();
         panel = new JPanel();
         NewMsg = new JTextField();
         ChatHistory = new JTextArea();
@@ -42,7 +54,7 @@ public class ComputerServer extends JFrame implements ActionListener {
         InetAddress locIP = InetAddress.getByName("192.168.1.101");
 //        InetAddress locIP = InetAddress.getLocalHost();
         //        server = new ServerSocket(8090, 1, InetAddress.getLocalHost());
-        server = new ServerSocket(8090, 0, locIP);
+        server = new ServerSocket(8080);
 
         System.out.print(InetAddress.getLocalHost());
         ChatHistory.setText("Waiting for Client");
@@ -54,22 +66,6 @@ public class ComputerServer extends JFrame implements ActionListener {
             } catch (IOException e) {
                 System.out.println("I/O error: " + e);
             }
-//            try {
-//                DataInputStream dis = new DataInputStream(conn.getInputStream());
-//                String string = dis.readUTF();
-//                ChatHistory.setText(ChatHistory.getText() + '\n' + "Client:"
-//                        + string);
-//            } catch (Exception e1) {
-//                ChatHistory.setText(ChatHistory.getText() + '\n'
-//                        + "Message sending fail:Network Error");
-//                try {
-//                    Thread.sleep(3000);
-//                    System.exit(0);
-//                } catch (InterruptedException e) {
-//                    // TODO Auto-generated catch block
-//                    e.printStackTrace();
-//                }
-//            }
         }
     }
 
@@ -84,21 +80,31 @@ public class ComputerServer extends JFrame implements ActionListener {
             Random random = new Random();
             int ran = random.nextInt()%100;
             BufferedReader input;
+            PrintWriter output;
             ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
-//            try {
-////                inp = socket.getInputStream();
-////                brinp = new BufferedReader(new InputStreamReader(inp));
-////                out = new DataOutputStream(socket.getOutputStream());
-//                DataInputStream dis = new DataInputStream(conn.getInputStream());
-//                String string = dis.readUTF();
-//            } catch (IOException e) {
-//                return;
-//            }
+            String[] arrIp = socket.getRemoteSocketAddress().toString().split(":");
+            String ip = arrIp[0];
+            String port = arrIp[1];
             try {
-//                PrintWriter output = new PrintWriter(socket.getOutputStream());
+                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                output = new PrintWriter(socket.getOutputStream());
+                while (true){
+                    try {
+                        String action = input.readLine();
+                        boolean loginOK = false;
+                        switch (action){
+                            case LOGIN_ACTION: {
+                                loginOK = doLogIn(input,output,ip);
+                            } break;
+                            case SIGNUP_ACTION: doSignUp(input,output,ip);break;
+                        }
+                        if (loginOK) break;
+                    } catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
                 while (true) {
                     try {
-                        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                         String message = input.readLine();
                         if (message!=null) ChatHistory.setText(ChatHistory.getText() + '\n' + "Thread "+ran+":"+message);
                     } catch (IOException e) {
@@ -141,5 +147,70 @@ public class ComputerServer extends JFrame implements ActionListener {
     public static void main(String[] args) throws UnknownHostException,
             IOException {
         new ComputerServer();
+    }
+
+    private boolean doLogIn(BufferedReader in, PrintWriter out,String ip){
+        try {
+            boolean canLogin = false;
+            String status = LOGIN_FAIL_USERNAME;
+            String username = in.readLine();
+            String password = in.readLine();
+            int lengh = userList.size();
+            for (int i=0;i<lengh;i++){
+                UserAccount user = userList.get(i);
+                if (user.getUsername().equals(username)) {
+                    if(user.getPassword().equals(password)){
+                        user.setOnline(true);
+                        user.setIp(ip);
+                        userList.set(i,user);
+                        status= LOGIN_SUCCESS;
+                        canLogin =  true;
+                        break;
+                    } else{
+                        status = LOGIN_FAIL_PASSWORD;
+                        break;
+                    }
+                }
+            }
+            out.write(status+"\n");
+            ChatHistory.setText(ChatHistory.getText() + '\n' + status);
+            out.flush();
+            return canLogin;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void doSignUp(BufferedReader in, PrintWriter out,String ip){
+        try {
+            String username = in.readLine();
+            String password = in.readLine();
+            String accountname = in.readLine();
+            boolean valid = true;
+            for (UserAccount user:userList){
+                if (user.getUsername().equals(username)) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid){
+                UserAccount user = new UserAccount();
+                user.setIp(ip);
+                user.setUsername(username);
+                user.setPassword(password);
+                user.setAccountname(accountname);
+                userList.add(user);
+                out.write(SIGNUP_SUCCESS+"\n");
+                out.flush();
+                ChatHistory.setText(ChatHistory.getText() + '\n' + "Success signup");
+            } else{
+                out.write(SIGNUP_FAIL_USERNAME+"\n");
+                ChatHistory.setText(ChatHistory.getText() + '\n' + "fail signup");
+                out.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
