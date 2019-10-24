@@ -4,6 +4,9 @@ public class UserInfo implements Serializable {
     String accountname;
     String ip;
 
+    public UserInfo() {
+    }
+
     public UserInfo(String accountname, String ip) {
         this.accountname = accountname;
         this.ip = ip;
@@ -23,5 +26,10 @@ public class UserInfo implements Serializable {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    @Override
+    public String toString() {
+        return accountname + ":"+ ip+"\n";
     }
 }

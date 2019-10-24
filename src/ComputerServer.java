@@ -6,9 +6,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
+import java.util.*;
 
 public class ComputerServer extends JFrame implements ActionListener {
     static ServerSocket server;
@@ -20,6 +18,8 @@ public class ComputerServer extends JFrame implements ActionListener {
     DataInputStream dis;
     DataOutputStream dos;
     ArrayList<UserAccount> userList;
+    Map<String, PrintWriter> onlineStream;
+    ArrayList<UserInfo> onlineList;
     private static final String LOGIN_ACTION = "LOGIN";
     private static final String SIGNUP_ACTION = "SIGNUP";
 
@@ -30,9 +30,15 @@ public class ComputerServer extends JFrame implements ActionListener {
     private static final String LOGIN_FAIL_PASSWORD = "LOGIN_FAIL_PASSWORD";
     private static final String LOGIN_FAIL_USERNAME = "LOGIN_FAIL_USERNAME";
 
+    private static final String NOTIFY_ONLINE = "NOTIFY_ONLINE";
+    private static final String REQUEST_ONLINE = "REQUEST_ONLINE";
+    private static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
+
 
     public ComputerServer() throws UnknownHostException, IOException {
         userList = new ArrayList<>();
+        onlineStream = new HashMap<>();
+        onlineList = new ArrayList<>();
         panel = new JPanel();
         NewMsg = new JTextField();
         ChatHistory = new JTextArea();
@@ -83,7 +89,7 @@ public class ComputerServer extends JFrame implements ActionListener {
             PrintWriter output;
             ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
             String[] arrIp = socket.getRemoteSocketAddress().toString().split(":");
-            String ip = arrIp[0];
+            String ip = arrIp[0].substring(1);
             String port = arrIp[1];
             try {
                 input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -99,9 +105,26 @@ public class ComputerServer extends JFrame implements ActionListener {
                                 } break;
                                 case SIGNUP_ACTION: doSignUp(input,output,ip);break;
                             }
-                        if (loginOK) break;
+                        if (loginOK) {
+                            onlineStream.put("ip"+ran,output);
+                            break;
+                        }
                     } catch (IOException e){
                         e.printStackTrace();
+                    }
+                }
+                while (true){
+                    try {
+                        String message = input.readLine();
+                        if (message!=null) {
+                            if (message.equals(REQUEST_ONLINE)) {
+                                notifyOnlineUser();
+                                break;
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
                     }
                 }
                 while (true) {
@@ -164,6 +187,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                         user.setOnline(true);
                         user.setIp(ip);
                         userList.set(i,user);
+                        onlineList.add(new UserInfo(user.getUsername(),ip));
                         status= LOGIN_SUCCESS;
                         canLogin =  true;
                         break;
@@ -204,7 +228,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                 userList.add(user);
                 out.write(SIGNUP_SUCCESS+"\n");
                 out.flush();
-                ChatHistory.setText(ChatHistory.getText() + '\n' + "Success signup");
+                ChatHistory.setText("Success signup");
             } else{
                 out.write(SIGNUP_FAIL_USERNAME+"\n");
                 ChatHistory.setText(ChatHistory.getText() + '\n' + "fail signup");
@@ -214,4 +238,25 @@ public class ComputerServer extends JFrame implements ActionListener {
             e.printStackTrace();
         }
     }
+
+    private void notifyOnlineUser(){
+        for (Map.Entry<String, PrintWriter> olUser : onlineStream.entrySet())
+        {
+            PrintWriter writer = olUser.getValue();
+            try {
+                writer.write(NOTIFY_ONLINE+"\n");
+                writer.flush();
+                for (UserInfo info : onlineList){
+                    ChatHistory.setText(ChatHistory.getText() + '\n' + info.toString());
+                    writer.write(info.toString());
+                }
+                writer.flush();
+                writer.write(END_NOTIFY_ONLINE+"\n");
+                writer.flush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
