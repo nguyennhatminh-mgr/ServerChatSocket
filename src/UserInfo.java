@@ -1,6 +1,4 @@
-import java.io.Serializable;
-
-public class UserInfo implements Serializable {
+public class UserInfo  {
     String accountname;
     String ip;
 

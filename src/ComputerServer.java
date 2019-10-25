@@ -15,8 +15,6 @@ public class ComputerServer extends JFrame implements ActionListener {
     JTextField NewMsg;
     JTextArea ChatHistory;
     JButton Send;
-    DataInputStream dis;
-    DataOutputStream dos;
     ArrayList<UserAccount> userList;
     Map<String, PrintWriter> onlineStream;
     private static final String LOGIN_ACTION = "LOGIN";
@@ -34,7 +32,7 @@ public class ComputerServer extends JFrame implements ActionListener {
     private static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
 
 
-    public ComputerServer() throws UnknownHostException, IOException {
+    public ComputerServer() throws IOException {
         userList = new ArrayList<>();
         onlineStream = new HashMap<>();
         panel = new JPanel();
