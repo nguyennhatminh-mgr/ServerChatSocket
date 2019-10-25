@@ -245,8 +245,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                 writer.flush();
                 for (UserAccount account : userList){
                     if (account.isOnline()){
-                        ChatHistory.setText(ChatHistory.getText() + '\n' + account.getIp());
-                        writer.write(account.getAccountname()+":"+account.getIp());
+                        writer.write(account.getAccountname()+":"+account.getIp()+'\n');
                     }
 
                 }
