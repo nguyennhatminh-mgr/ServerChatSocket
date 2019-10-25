@@ -106,7 +106,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                                 case SIGNUP_ACTION: doSignUp(input,output,ip);break;
                             }
                         if (loginOK) {
-                            onlineStream.put("ip"+ran,output);
+                            onlineStream.put(ip,output);
                             break;
                         }
                     } catch (IOException e){
