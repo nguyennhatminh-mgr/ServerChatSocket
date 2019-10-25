@@ -19,7 +19,6 @@ public class ComputerServer extends JFrame implements ActionListener {
     DataOutputStream dos;
     ArrayList<UserAccount> userList;
     Map<String, PrintWriter> onlineStream;
-    ArrayList<UserInfo> onlineList;
     private static final String LOGIN_ACTION = "LOGIN";
     private static final String SIGNUP_ACTION = "SIGNUP";
 
@@ -38,7 +37,6 @@ public class ComputerServer extends JFrame implements ActionListener {
     public ComputerServer() throws UnknownHostException, IOException {
         userList = new ArrayList<>();
         onlineStream = new HashMap<>();
-        onlineList = new ArrayList<>();
         panel = new JPanel();
         NewMsg = new JTextField();
         ChatHistory = new JTextArea();
@@ -187,7 +185,6 @@ public class ComputerServer extends JFrame implements ActionListener {
                         user.setOnline(true);
                         user.setIp(ip);
                         userList.set(i,user);
-                        onlineList.add(new UserInfo(user.getUsername(),ip));
                         status= LOGIN_SUCCESS;
                         canLogin =  true;
                         break;
@@ -246,9 +243,12 @@ public class ComputerServer extends JFrame implements ActionListener {
             try {
                 writer.write(NOTIFY_ONLINE+"\n");
                 writer.flush();
-                for (UserInfo info : onlineList){
-                    ChatHistory.setText(ChatHistory.getText() + '\n' + info.toString());
-                    writer.write(info.toString());
+                for (UserAccount account : userList){
+                    if (account.isOnline()){
+                        ChatHistory.setText(ChatHistory.getText() + '\n' + account.getIp());
+                        writer.write(account.getAccountname()+":"+account.getIp());
+                    }
+
                 }
                 writer.flush();
                 writer.write(END_NOTIFY_ONLINE+"\n");
