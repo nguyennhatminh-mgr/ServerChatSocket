@@ -240,11 +240,12 @@ public class ComputerServer extends JFrame implements ActionListener {
         for (Map.Entry<String, PrintWriter> olUser : onlineStream.entrySet())
         {
             PrintWriter writer = olUser.getValue();
+            String ip = olUser.getKey();
             try {
                 writer.write(NOTIFY_ONLINE+"\n");
                 writer.flush();
                 for (UserAccount account : userList){
-                    if (account.isOnline()){
+                    if (account.isOnline() && !account.getIp().equals(ip)){
                         writer.write(account.getAccountname()+":"+account.getIp()+'\n');
                     }
 
