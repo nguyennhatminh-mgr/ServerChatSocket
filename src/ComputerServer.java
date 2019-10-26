@@ -123,15 +123,15 @@ public class ComputerServer extends JFrame implements ActionListener {
                         return;
                     }
                 }
-                while (true) {
-                    try {
-                        String message = input.readLine();
-                        if (message!=null) ChatHistory.setText(ChatHistory.getText() + '\n' + "Thread "+ran+":"+message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;
-                    }
-                }
+//                while (true) {
+//                    try {
+//                        String message = input.readLine();
+//                        if (message!=null) ChatHistory.setText(ChatHistory.getText() + '\n' + "Thread "+ran+":"+message);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                        return;
+//                    }
+//                }
             } catch (Exception e){
                 e.printStackTrace();
             }
