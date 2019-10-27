@@ -91,6 +91,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                 input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 output = new PrintWriter(socket.getOutputStream());
                 while (true){
+                    Thread.sleep(50);
                     try {
                         String action = input.readLine();
                         boolean loginOK = false;
@@ -110,12 +111,20 @@ public class ComputerServer extends JFrame implements ActionListener {
                     }
                 }
                 while (true){
+                    Thread.sleep(50);
                     try {
                         String message = input.readLine();
                         if (message!=null) {
-                            if (message.equals(REQUEST_ONLINE)) {
-                                notifyOnlineUser();
-                                break;
+                            switch (message){
+                                case REQUEST_ONLINE:{
+                                    notifyOnlineUser();
+                                    break;
+                                }
+                                case AuthenProtocol.LOGOUT_ACTION:{
+                                    onlineStream.remove(ip);
+                                    removeUserByIp(ip);
+                                    notifyOnlineUser();
+                                }
                             }
                         }
                     } catch (IOException e) {
@@ -257,4 +266,14 @@ public class ComputerServer extends JFrame implements ActionListener {
         }
     }
 
+    void removeUserByIp(String ip){
+        int lengh = userList.size();
+        for (int i=0;i<lengh;i++){
+            UserAccount user = userList.get(i);
+            if (user.getIp().equals(ip)){
+                user.setOnline(false);
+            }
+            userList.set(i,user);
+        }
+    }
 }
