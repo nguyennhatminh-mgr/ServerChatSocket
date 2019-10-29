@@ -17,19 +17,19 @@ public class ComputerServer extends JFrame implements ActionListener {
     JButton Send;
     ArrayList<UserAccount> userList;
     Map<String, PrintWriter> onlineStream;
-    private static final String LOGIN_ACTION = "LOGIN";
-    private static final String SIGNUP_ACTION = "SIGNUP";
-
-    private static final String SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
-    private static final String SIGNUP_FAIL_USERNAME = "SIGNUP_FAIL_USERNAME";
-
-    private static final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
-    private static final String LOGIN_FAIL_PASSWORD = "LOGIN_FAIL_PASSWORD";
-    private static final String LOGIN_FAIL_USERNAME = "LOGIN_FAIL_USERNAME";
-
-    private static final String NOTIFY_ONLINE = "NOTIFY_ONLINE";
-    private static final String REQUEST_ONLINE = "REQUEST_ONLINE";
-    private static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
+//    private static final String LOGIN_ACTION = "LOGIN";
+//    private static final String SIGNUP_ACTION = "SIGNUP";
+//
+//    private static final String SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
+//    private static final String SIGNUP_FAIL_USERNAME = "SIGNUP_FAIL_USERNAME";
+//
+//    private static final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
+//    private static final String LOGIN_FAIL_PASSWORD = "LOGIN_FAIL_PASSWORD";
+//    private static final String LOGIN_FAIL_USERNAME = "LOGIN_FAIL_USERNAME";
+//
+//    private static final String NOTIFY_ONLINE = "NOTIFY_ONLINE";
+//    private static final String REQUEST_ONLINE = "REQUEST_ONLINE";
+//    private static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
 
 
     public ComputerServer() throws IOException {
@@ -54,13 +54,10 @@ public class ComputerServer extends JFrame implements ActionListener {
         this.setTitle("Server");
         Send.addActionListener(this);
         InetAddress locIP = InetAddress.getByName("192.168.1.101");
-//        InetAddress locIP = InetAddress.getLocalHost();
-        //        server = new ServerSocket(8090, 1, InetAddress.getLocalHost());
         server = new ServerSocket(8080);
 
         System.out.print(InetAddress.getLocalHost());
         ChatHistory.setText("Waiting for Client");
-//        ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
         while (true) {
             try {
                 conn = server.accept();
@@ -97,10 +94,13 @@ public class ComputerServer extends JFrame implements ActionListener {
                         boolean loginOK = false;
                         if (action!=null)
                             switch (action){
-                                case LOGIN_ACTION: {
+                                case AuthenProtocol.LOGIN_ACTION: {
                                     loginOK = doLogIn(input,output,ip);
                                 } break;
-                                case SIGNUP_ACTION: doSignUp(input,output,ip);break;
+                                case AuthenProtocol.SIGNUP_ACTION: doSignUp(input,output,ip);break;
+                                case AuthenProtocol.UPLOAD_IMAGE: {
+
+                                }
                             }
                         if (loginOK) {
                             onlineStream.put(ip,output);
@@ -108,6 +108,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                         }
                     } catch (IOException e){
                         e.printStackTrace();
+                        return;
                     }
                 }
                 while (true){
@@ -116,7 +117,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                         String message = input.readLine();
                         if (message!=null) {
                             switch (message){
-                                case REQUEST_ONLINE:{
+                                case AuthenProtocol.REQUEST_ONLINE:{
                                     notifyOnlineUser();
                                     break;
                                 }
@@ -124,7 +125,11 @@ public class ComputerServer extends JFrame implements ActionListener {
                                     onlineStream.remove(ip);
                                     removeUserByIp(ip);
                                     notifyOnlineUser();
+                                    break;
                                 }
+//                                case AuthenProtocol.GET_PERSONAL_INFO:{
+//
+//                                }
                             }
                         }
                     } catch (IOException e) {
@@ -132,15 +137,6 @@ public class ComputerServer extends JFrame implements ActionListener {
                         return;
                     }
                 }
-//                while (true) {
-//                    try {
-//                        String message = input.readLine();
-//                        if (message!=null) ChatHistory.setText(ChatHistory.getText() + '\n' + "Thread "+ran+":"+message);
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                        return;
-//                    }
-//                }
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -181,7 +177,7 @@ public class ComputerServer extends JFrame implements ActionListener {
     private boolean doLogIn(BufferedReader in, PrintWriter out,String ip){
         try {
             boolean canLogin = false;
-            String status = LOGIN_FAIL_USERNAME;
+            String status = AuthenProtocol.LOGIN_FAIL_USERNAME;
             String username = in.readLine();
             String password = in.readLine();
             int lengh = userList.size();
@@ -192,11 +188,11 @@ public class ComputerServer extends JFrame implements ActionListener {
                         user.setOnline(true);
                         user.setIp(ip);
                         userList.set(i,user);
-                        status= LOGIN_SUCCESS;
+                        status= AuthenProtocol.LOGIN_SUCCESS;
                         canLogin =  true;
                         break;
                     } else{
-                        status = LOGIN_FAIL_PASSWORD;
+                        status = AuthenProtocol.LOGIN_FAIL_PASSWORD;
                         break;
                     }
                 }
@@ -230,11 +226,11 @@ public class ComputerServer extends JFrame implements ActionListener {
                 user.setPassword(password);
                 user.setAccountname(accountname);
                 userList.add(user);
-                out.write(SIGNUP_SUCCESS+"\n");
+                out.write(AuthenProtocol.SIGNUP_SUCCESS+"\n");
                 out.flush();
                 ChatHistory.setText("Success signup");
             } else{
-                out.write(SIGNUP_FAIL_USERNAME+"\n");
+                out.write(AuthenProtocol.SIGNUP_FAIL_USERNAME+"\n");
                 ChatHistory.setText(ChatHistory.getText() + '\n' + "fail signup");
                 out.flush();
             }
@@ -249,7 +245,7 @@ public class ComputerServer extends JFrame implements ActionListener {
             PrintWriter writer = olUser.getValue();
             String ip = olUser.getKey();
             try {
-                writer.write(NOTIFY_ONLINE+"\n");
+                writer.write(AuthenProtocol.NOTIFY_ONLINE+"\n");
                 writer.flush();
                 for (UserAccount account : userList){
                     if (account.isOnline() && !account.getIp().equals(ip)){
@@ -258,7 +254,7 @@ public class ComputerServer extends JFrame implements ActionListener {
 
                 }
                 writer.flush();
-                writer.write(END_NOTIFY_ONLINE+"\n");
+                writer.write(AuthenProtocol.END_NOTIFY_ONLINE+"\n");
                 writer.flush();
             } catch (Exception e) {
                 e.printStackTrace();
