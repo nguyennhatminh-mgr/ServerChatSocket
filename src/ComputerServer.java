@@ -1,4 +1,5 @@
 import javax.swing.*;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -17,6 +18,9 @@ public class ComputerServer extends JFrame implements ActionListener {
     JButton Send;
     ArrayList<UserAccount> userList;
     Map<String, PrintWriter> onlineStream;
+    Map<String, PrintWriter> groupStream;
+    ArrayList<GroupUser> groupUsersList;
+    GroupUser groupOne;
     private static final String LOGIN_ACTION = "LOGIN";
     private static final String SIGNUP_ACTION = "SIGNUP";
 
@@ -35,6 +39,11 @@ public class ComputerServer extends JFrame implements ActionListener {
     public ComputerServer() throws IOException {
         userList = new ArrayList<>();
         onlineStream = new HashMap<>();
+        groupStream = new HashMap<>();
+        groupUsersList=new ArrayList<>();
+        ArrayList<UserAccount> listUserInGroup=new ArrayList<>();
+        ArrayList<GroupMessage> listMessageInGroup=new ArrayList<>();
+        groupOne=new GroupUser("MMT", listUserInGroup, listMessageInGroup);
         panel = new JPanel();
         NewMsg = new JTextField();
         ChatHistory = new JTextArea();
@@ -86,8 +95,10 @@ public class ComputerServer extends JFrame implements ActionListener {
             ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
             String[] arrIp = socket.getRemoteSocketAddress().toString().split(":");
             String ip = arrIp[0].substring(1);
+            System.out.println("real ip"+ip);
             String port = arrIp[1];
             try {
+                boolean checkGroup=false;
                 input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 output = new PrintWriter(socket.getOutputStream());
                 while (true){
@@ -98,12 +109,20 @@ public class ComputerServer extends JFrame implements ActionListener {
                         if (action!=null)
                             switch (action){
                                 case LOGIN_ACTION: {
+                                    // System.out.println("LOGIN ACTION");
                                     loginOK = doLogIn(input,output,ip);
+                                    if (loginOK) onlineStream.put(ip,output);
+                                    checkGroup=false;
                                 } break;
                                 case SIGNUP_ACTION: doSignUp(input,output,ip);break;
+                                case AuthenProtocol.GROUP_ACTION:{
+                                    groupStream.put(ip, output);
+                                    loginOK=true;
+                                    checkGroup=true;
+                                    
+                                }break;
                             }
                         if (loginOK) {
-                            onlineStream.put(ip,output);
                             break;
                         }
                     } catch (IOException e){
@@ -112,26 +131,81 @@ public class ComputerServer extends JFrame implements ActionListener {
                 }
                 while (true){
                     Thread.sleep(50);
-                    try {
-                        String message = input.readLine();
-                        if (message!=null) {
-                            switch (message){
-                                case REQUEST_ONLINE:{
-                                    notifyOnlineUser();
-                                    break;
-                                }
-                                case AuthenProtocol.LOGOUT_ACTION:{
-                                    onlineStream.remove(ip);
-                                    removeUserByIp(ip);
-                                    notifyOnlineUser();
+                    if(checkGroup==false){
+                        try {
+                            String message = input.readLine();
+                            if (message!=null) {
+                                switch (message){
+                                    case REQUEST_ONLINE:{
+                                        // System.out.println("get there");
+                                        notifyOnlineUser();
+                                        break;
+                                    }
+                                    case AuthenProtocol.LOGOUT_ACTION:{
+                                        // System.out.println("get out");
+                                        onlineStream.remove(ip);
+                                        removeUserByIp(ip);
+                                        notifyOnlineUser();
+                                        break;
+                                    }   
+                                    
                                 }
                             }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;
+                    }
+                    else{
+                        try {
+                            String message = input.readLine();
+                            if (message!=null) {
+                                switch (message){
+                                    case AuthenProtocol.JOIN_TO_GROUP:{
+                                        String subIp=input.readLine();
+                                        System.out.println("get to group");
+                                        for(UserAccount user:userList){
+                                            if(user.getIp().equals(ip)){
+                                                groupOne.listUser.add(user);
+                                            }
+                                        }
+                                        System.out.println(groupOne.listUser);
+                                        notifyGroupUser();
+                                        break;
+                                    }  
+                                    case AuthenProtocol.REQ_TO_GET_MESSAGE:{
+                                        System.out.println("get there");
+                                        output.write("MESSAGE_RESPONE_IN_GROUP"+"\n");
+                                        output.flush();
+                                        System.out.println(groupOne.listMessage);
+                                        for (GroupMessage msg:groupOne.listMessage){
+                                            output.write(msg.getUsername()+"\n");
+                                            output.write(msg.getMessage()+"\n");
+                                        }
+                                        output.flush();
+                                        output.write("END_MESSAGE_RESPONE_IN_GROUP"+"\n");
+                                        output.flush();
+                                        break;
+                                    }
+                                    case AuthenProtocol.MESSAGE_IN_GROUP:{
+                                        String newMessage=input.readLine();
+                                        String myIP=input.readLine();
+                                        String username = getUsernameByIp(ip);
+                                        System.out.println("My IP"+ip);
+                                        GroupMessage gMsg = new GroupMessage(username,newMessage);
+                                        groupOne.listMessage.add(gMsg);
+                                        sendMessageToUserInGroup(gMsg,ip);
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
                     }
                 }
+                
 //                while (true) {
 //                    try {
 //                        String message = input.readLine();
@@ -177,6 +251,7 @@ public class ComputerServer extends JFrame implements ActionListener {
             IOException {
         new ComputerServer();
     }
+
 
     private boolean doLogIn(BufferedReader in, PrintWriter out,String ip){
         try {
@@ -243,9 +318,50 @@ public class ComputerServer extends JFrame implements ActionListener {
         }
     }
 
+    void notifyGroupUser(){
+        for (Map.Entry<String, PrintWriter> pair : groupStream.entrySet())
+        {
+            // System.out.println("get user");
+            PrintWriter writer = pair.getValue();
+            String ip = pair.getKey();
+            try {
+                writer.write("NOTIFY_JOIN_TO_GROUP"+"\n");
+                writer.flush();
+                for(UserAccount account:groupOne.listUser){
+                    writer.write(account.getAccountname()+":"+account.getIp()+"\n");
+                }
+                writer.flush();
+                writer.write("END_NOTIFY_JOIN_TO_GROUP"+"\n");
+                writer.flush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    void sendMessageToUserInGroup(GroupMessage gMsg,String myIp){
+        for (Map.Entry<String, PrintWriter> pair : groupStream.entrySet())
+        {
+            // System.out.println("get user");
+            PrintWriter writer = pair.getValue();
+            String ip = pair.getKey();
+            if (myIp.equals(ip)) continue;
+            try {
+                writer.write("MESSAGE_SINGLE_RESPONE_IN_GROUP"+"\n");
+                writer.write(gMsg.getUsername()+"\n");
+                writer.write(gMsg.getMessage()+"\n");
+                writer.flush();
+                writer.write("END_MESSAGE_SINGLE_RESPONE_IN_GROUP"+"\n");
+                writer.flush();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void notifyOnlineUser(){
         for (Map.Entry<String, PrintWriter> olUser : onlineStream.entrySet())
         {
+            // System.out.println("get user");
             PrintWriter writer = olUser.getValue();
             String ip = olUser.getKey();
             try {
@@ -275,5 +391,12 @@ public class ComputerServer extends JFrame implements ActionListener {
             }
             userList.set(i,user);
         }
+    }
+
+    String getUsernameByIp(String ip){
+        for (UserAccount account:userList){
+            if (account.getIp().equals(ip)) return account.getUsername();
+        }
+        return "";
     }
 }
