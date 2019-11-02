@@ -130,8 +130,30 @@ public class ComputerServer extends JFrame implements ActionListener {
                                     checkGroup=true;
                                     
                                 }break;
-                                case AuthenProtocol.UPLOAD_IMAGE: {
+                                case AuthenProtocol.UPDATE_IMAGE: {
+                                    String filename = input.readLine();
+                                    try{
+                                        File file = new File(filename);
+                                        DataInputStream dis = new DataInputStream(socket.getInputStream());
+                                        FileOutputStream fos = new FileOutputStream(file);
+                                        byte[] buffer = new byte[4069];
+                                        int read;
+                                        while ((read = dis.read(buffer)) > 0) {
+                                            fos.write(buffer, 0, read);
+                                        }
+//                                    while (dis.read(buffer) > 0) {
+//                                        fos.write(buffer);
+//                                    }
+                                        System.out.println("received");
+                                        dis.close();
+                                        fos.close();
 
+                                    } catch (Exception e){
+                                        e.printStackTrace();
+                                        System.out.println(e.toString());
+                                    }
+
+//                                    if (socket!=null) socket.close();
                                 }
                             }
                         if (loginOK) {
@@ -149,6 +171,25 @@ public class ComputerServer extends JFrame implements ActionListener {
                             String message = input.readLine();
                             if (message!=null) {
                                 switch (message){
+                                    case AuthenProtocol.GET_PERSONAL_INFO:{
+                                        boolean exist = false;
+                                        for (UserAccount user:userList){
+                                            if (user.getIp().equals(ip)){
+                                                output.write(AuthenProtocol.VALID_USER+"\n");
+                                                output.write(user.getAccountname()+"\n");
+                                                output.write(user.getUsername()+"\n");
+                                                output.write(user.getIp()+"\n");
+                                                output.flush();
+                                                exist = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!exist){
+                                            output.write(AuthenProtocol.INVALID_USER+"\n");
+                                            output.flush();
+                                        }
+                                        break;
+                                    }
                                     case AuthenProtocol.REQUEST_ONLINE:{
                                         notifyOnlineUser();
                                         break;
