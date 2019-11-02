@@ -1,8 +1,11 @@
 public class AuthenProtocol {
     public static final String LOGIN_ACTION = "LOGIN";
     public static final String SIGNUP_ACTION = "SIGNUP";
-    public static final String UPLOAD_IMAGE = "UPLOAD_IMAGE";
+    public static final String UPDATE_IMAGE = "UPDATE_IMAGE";
     public static final String GET_PERSONAL_INFO = "GET_PERSONAL_INFO";
+    public static final String VALID_USER = "VALID_USER";
+    public static final String INVALID_USER = "INVALID_USER";
+
 
     public static final String SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
     public static final String SIGNUP_FAIL_USERNAME = "SIGNUP_FAIL_USERNAME";
