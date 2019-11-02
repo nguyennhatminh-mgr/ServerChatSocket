@@ -176,7 +176,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                             if (message!=null) {
                                 switch (message){
                                     case AuthenProtocol.JOIN_TO_GROUP:{
-                                        String subIp=input.readLine();
+                                        // String subIp=input.readLine();
                                         System.out.println("get to group");
                                         for(UserAccount user:userList){
                                             if(user.getIp().equals(ip)){
@@ -189,7 +189,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                                     }  
                                     case AuthenProtocol.REQ_TO_GET_MESSAGE:{
                                         System.out.println("get there");
-                                        output.write("MESSAGE_RESPONE_IN_GROUP"+"\n");
+                                        output.write(AuthenProtocol.MESSAGE_RESPONE_IN_GROUP+"\n");
                                         output.flush();
                                         System.out.println(groupOne.listMessage);
                                         for (GroupMessage msg:groupOne.listMessage){
@@ -197,19 +197,29 @@ public class ComputerServer extends JFrame implements ActionListener {
                                             output.write(msg.getMessage()+"\n");
                                         }
                                         output.flush();
-                                        output.write("END_MESSAGE_RESPONE_IN_GROUP"+"\n");
+                                        output.write(AuthenProtocol.END_MESSAGE_RESPONE_IN_GROUP+"\n");
                                         output.flush();
                                         break;
                                     }
                                     case AuthenProtocol.MESSAGE_IN_GROUP:{
                                         String newMessage=input.readLine();
-                                        String myIP=input.readLine();
+                                        // String myIP=input.readLine();
                                         String username = getUsernameByIp(ip);
                                         System.out.println("My IP"+ip);
                                         GroupMessage gMsg = new GroupMessage(username,newMessage);
                                         groupOne.listMessage.add(gMsg);
                                         sendMessageToUserInGroup(gMsg,ip);
                                         break;
+                                    }
+                                    case AuthenProtocol.OUT_GROUP:{
+                                        groupStream.remove(ip);
+                                        for(UserAccount user:groupOne.listUser){
+                                            if(user.getIp().equals(ip)){
+                                                groupOne.listUser.remove(user);
+                                            }
+                                        }
+                                        notifyGroupUser();
+                                        
                                     }
                     
                                 }
@@ -331,13 +341,13 @@ public class ComputerServer extends JFrame implements ActionListener {
             PrintWriter writer = pair.getValue();
             String ip = pair.getKey();
             try {
-                writer.write("NOTIFY_JOIN_TO_GROUP"+"\n");
+                writer.write(AuthenProtocol.NOTIFY_JOIN_TO_GROUP+"\n");
                 writer.flush();
                 for(UserAccount account:groupOne.listUser){
                     writer.write(account.getAccountname()+":"+account.getIp()+"\n");
                 }
                 writer.flush();
-                writer.write("END_NOTIFY_JOIN_TO_GROUP"+"\n");
+                writer.write(AuthenProtocol.END_NOTIFY_JOIN_TO_GROUP+"\n");
                 writer.flush();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -352,11 +362,11 @@ public class ComputerServer extends JFrame implements ActionListener {
             String ip = pair.getKey();
             if (myIp.equals(ip)) continue;
             try {
-                writer.write("MESSAGE_SINGLE_RESPONE_IN_GROUP"+"\n");
+                writer.write(AuthenProtocol.MESSAGE_SINGLE_RESPONE_IN_GROUP+"\n");
                 writer.write(gMsg.getUsername()+"\n");
                 writer.write(gMsg.getMessage()+"\n");
                 writer.flush();
-                writer.write("END_MESSAGE_SINGLE_RESPONE_IN_GROUP"+"\n");
+                writer.write(AuthenProtocol.END_MESSAGE_SINGLE_RESPONE_IN_GROUP+"\n");
                 writer.flush();
             } catch (Exception e) {
                 e.printStackTrace();
