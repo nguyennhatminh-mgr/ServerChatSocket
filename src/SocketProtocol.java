@@ -1,4 +1,4 @@
-public class AuthenProtocol {
+public class SocketProtocol {
     public static final String LOGIN_ACTION = "LOGIN";
     public static final String SIGNUP_ACTION = "SIGNUP";
     public static final String UPDATE_IMAGE = "UPDATE_IMAGE";
