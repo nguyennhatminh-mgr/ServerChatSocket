@@ -19,7 +19,6 @@ public class AuthenProtocol {
     public static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
 
     public static final String LOGOUT_ACTION = "LOGOUT";
-    public static final String LOGOUT_DONE = "LOGOUT_DONE";
     public static final String JOIN_TO_GROUP = "JOIN_TO_GROUP";
     public static final String REQ_TO_GET_MESSAGE = "REQ_TO_GET_MESSAGE";
     public static final String MESSAGE_IN_GROUP = "MESSAGE_IN_GROUP";

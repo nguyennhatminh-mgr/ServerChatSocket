@@ -21,32 +21,6 @@ public class ComputerServer extends JFrame implements ActionListener {
     Map<String, PrintWriter> groupStream;
     ArrayList<GroupUser> groupUsersList;
     GroupUser groupOne;
-    private static final String LOGIN_ACTION = "LOGIN";
-    private static final String SIGNUP_ACTION = "SIGNUP";
-
-    private static final String SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
-    private static final String SIGNUP_FAIL_USERNAME = "SIGNUP_FAIL_USERNAME";
-
-    private static final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
-    private static final String LOGIN_FAIL_PASSWORD = "LOGIN_FAIL_PASSWORD";
-    private static final String LOGIN_FAIL_USERNAME = "LOGIN_FAIL_USERNAME";
-
-    private static final String NOTIFY_ONLINE = "NOTIFY_ONLINE";
-    private static final String REQUEST_ONLINE = "REQUEST_ONLINE";
-    private static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
-//    private static final String LOGIN_ACTION = "LOGIN";
-//    private static final String SIGNUP_ACTION = "SIGNUP";
-//
-//    private static final String SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
-//    private static final String SIGNUP_FAIL_USERNAME = "SIGNUP_FAIL_USERNAME";
-//
-//    private static final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
-//    private static final String LOGIN_FAIL_PASSWORD = "LOGIN_FAIL_PASSWORD";
-//    private static final String LOGIN_FAIL_USERNAME = "LOGIN_FAIL_USERNAME";
-//
-//    private static final String NOTIFY_ONLINE = "NOTIFY_ONLINE";
-//    private static final String REQUEST_ONLINE = "REQUEST_ONLINE";
-//    private static final String END_NOTIFY_ONLINE = "END_NOTIFY_ONLINE";
 
 
     public ComputerServer() throws IOException {
@@ -123,7 +97,7 @@ public class ComputerServer extends JFrame implements ActionListener {
                                     if (loginOK) onlineStream.put(ip,output);
                                     checkGroup=false;
                                 } break;
-                                case SIGNUP_ACTION: doSignUp(input,output,ip);break;
+                                case AuthenProtocol.SIGNUP_ACTION: doSignUp(input,output,ip);break;
                                 case AuthenProtocol.GROUP_ACTION:{
                                     groupStream.put(ip, output);
                                     loginOK=true;
