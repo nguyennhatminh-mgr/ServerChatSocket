@@ -79,7 +79,6 @@ public class ComputerServer extends JFrame implements ActionListener {
             ChatHistory.setText(ChatHistory.getText() + '\n' + "Client Found");
             String[] arrIp = socket.getRemoteSocketAddress().toString().split(":");
             String ip = arrIp[0].substring(1);
-            System.out.println("real ip"+ip);
             String port = arrIp[1];
             try {
                 boolean checkGroup=false;
@@ -118,7 +117,6 @@ public class ComputerServer extends JFrame implements ActionListener {
 //                                    while (dis.read(buffer) > 0) {
 //                                        fos.write(buffer);
 //                                    }
-                                        System.out.println("received");
                                         dis.close();
                                         fos.close();
 
@@ -192,23 +190,20 @@ public class ComputerServer extends JFrame implements ActionListener {
                                 switch (message){
                                     case SocketProtocol.JOIN_TO_GROUP:{
                                         // String subIp=input.readLine();
-                                        System.out.println("get to group");
                                         for(UserAccount user:userList){
                                             if(user.getIp().equals(ip)){
                                                 groupOne.listUser.add(user);
                                             }
                                         }
-                                        System.out.println(groupOne.listUser);
                                         notifyGroupUser();
                                         break;
                                     }  
                                     case SocketProtocol.REQ_TO_GET_MESSAGE:{
-                                        System.out.println("get there");
                                         output.write(SocketProtocol.MESSAGE_RESPONE_IN_GROUP+"\n");
                                         output.flush();
-                                        System.out.println(groupOne.listMessage);
                                         for (GroupMessage msg:groupOne.listMessage){
                                             output.write(msg.getUsername()+"\n");
+                                            output.write(msg.getAccountname()+"\n");
                                             output.write(msg.getMessage()+"\n");
                                         }
                                         output.flush();
@@ -219,16 +214,16 @@ public class ComputerServer extends JFrame implements ActionListener {
                                     case SocketProtocol.MESSAGE_IN_GROUP:{
                                         String newMessage=input.readLine();
                                         // String myIP=input.readLine();
-                                        String username = getUsernameByIp(ip);
-                                        System.out.println("My IP"+ip);
-                                        GroupMessage gMsg = new GroupMessage(username,newMessage);
+                                        String[] name = getNameByIp(ip);
+                                        GroupMessage gMsg = new GroupMessage(name[0],name[1],newMessage);
                                         groupOne.listMessage.add(gMsg);
                                         sendMessageToUserInGroup(gMsg,ip);
                                         break;
                                     }
                                     case SocketProtocol.OUT_GROUP:{
                                         groupStream.remove(ip);
-                                        for(UserAccount user:groupOne.listUser){
+                                        for(int i=0;i<groupOne.listUser.size();i++){
+                                            UserAccount user=groupOne.listUser.get(i);
                                             if(user.getIp().equals(ip)){
                                                 groupOne.listUser.remove(user);
                                             }
@@ -352,7 +347,6 @@ public class ComputerServer extends JFrame implements ActionListener {
     void notifyGroupUser(){
         for (Map.Entry<String, PrintWriter> pair : groupStream.entrySet())
         {
-            // System.out.println("get user");
             PrintWriter writer = pair.getValue();
             String ip = pair.getKey();
             try {
@@ -372,13 +366,13 @@ public class ComputerServer extends JFrame implements ActionListener {
     void sendMessageToUserInGroup(GroupMessage gMsg,String myIp){
         for (Map.Entry<String, PrintWriter> pair : groupStream.entrySet())
         {
-            // System.out.println("get user");
             PrintWriter writer = pair.getValue();
             String ip = pair.getKey();
             if (myIp.equals(ip)) continue;
             try {
                 writer.write(SocketProtocol.MESSAGE_SINGLE_RESPONE_IN_GROUP+"\n");
                 writer.write(gMsg.getUsername()+"\n");
+                writer.write(gMsg.getAccountname()+"\n");
                 writer.write(gMsg.getMessage()+"\n");
                 writer.flush();
                 writer.write(SocketProtocol.END_MESSAGE_SINGLE_RESPONE_IN_GROUP+"\n");
@@ -392,7 +386,6 @@ public class ComputerServer extends JFrame implements ActionListener {
     private void notifyOnlineUser(){
         for (Map.Entry<String, PrintWriter> olUser : onlineStream.entrySet())
         {
-            // System.out.println("get user");
             PrintWriter writer = olUser.getValue();
             String ip = olUser.getKey();
             try {
@@ -424,10 +417,10 @@ public class ComputerServer extends JFrame implements ActionListener {
         }
     }
 
-    String getUsernameByIp(String ip){
+    String[] getNameByIp(String ip){
         for (UserAccount account:userList){
-            if (account.getIp().equals(ip)) return account.getUsername();
+            if (account.getIp().equals(ip)) return new String[] {account.getUsername(),account.getAccountname()};
         }
-        return "";
+        return new String[] {"",""};
     }
 }
